@@ -29,56 +29,57 @@ python backend/run_sse.py
 
 ## 安装
 
+**本地安装（推荐开发测试）：**
+
 ```bash
-# 在 OpenClaw 扩展目录下
-pnpm add @openclaw/nocturne-memory
+openclaw plugins install -l /path/to/openclaw-nocturne-memory
+```
+
+**npm 安装：**
+
+```bash
+openclaw plugins install @openclaw/nocturne-memory
 ```
 
 ## 配置
 
-在 `agents.json5`（或 `openclaw.json5`）中添加插件配置：
+安装后在 OpenClaw 配置文件中添加以下内容。注意：插件自身的配置项（`url`、`agents`、`defaultNamespace`）必须放在 `config` 对象内。
 
 ```json5
 {
-  plugins: {
-    "nocturne-memory": {
-      // Nocturne Memory SSE 服务器地址
-      url: "http://localhost:8000",
+  "plugins": {
+    "allow": ["nocturne-memory"],
+    // 本地安装时需要 load.paths（-l 安装会自动添加）
+    "load": {
+      "paths": ["/path/to/openclaw-nocturne-memory"]
+    },
+    "entries": {
+      "nocturne-memory": {
+        "enabled": true,
+        "config": {
+          // Nocturne Memory 服务器地址
+          // Docker Compose 部署（Nginx 反代）: http://localhost:80
+          // 本地裸机部署: http://localhost:8001
+          "url": "http://localhost:80",
 
-      // 每个 Agent 的命名空间映射
-      agents: [
-        { agentId: "main", namespace: "main" },
-        { agentId: "research", namespace: "research" },
-        { agentId: "creative", namespace: "creative" }
-      ],
+          // 每个 Agent 的命名空间映射
+          "agents": [
+            { "agentId": "main", "namespace": "main" },
+            { "agentId": "research", "namespace": "research" },
+            { "agentId": "creative", "namespace": "creative" }
+          ],
 
-      // 可选：未映射 Agent 使用的默认命名空间（默认为空字符串）
-      defaultNamespace: ""
-    }
-  },
-
-  agents: {
-    list: [
-      {
-        id: "main",
-        tools: {
-          allow: [
-            "nocturne-memory",  // 启用该插件的所有工具
-            // 或逐个指定:
-            // "read_memory",
-            // "create_memory",
-            // "update_memory",
-            // "delete_memory",
-            // "add_alias",
-            // "manage_triggers",
-            // "search_memory"
-          ]
+          // 可选：未映射 Agent 使用的默认命名空间（默认为空字符串）
+          "defaultNamespace": ""
         }
       }
-    ]
+    }
   }
 }
 ```
+
+> **常见错误**：如果把 `url`、`agents` 直接放在 `nocturne-memory` 下（与 `enabled` 同级），
+> 会导致 config 校验失败或插件读不到配置。必须嵌套在 `config` 内。
 
 ## 工作原理
 

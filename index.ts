@@ -13,20 +13,24 @@ import type { NocturneMemoryConfig } from "./src/config.js";
 type Api = any;
 
 export default function register(api: Api): void {
-  const config = api.getConfig?.("nocturne-memory") as
-    | NocturneMemoryConfig
-    | undefined;
+  const raw = api.pluginConfig as Record<string, unknown> | undefined;
+  const config: NocturneMemoryConfig = {
+    url: (raw?.url as string) ?? "",
+    agents: (raw?.agents as NocturneMemoryConfig["agents"]) ?? [],
+    defaultNamespace: (raw?.defaultNamespace as string) ?? "",
+  };
 
-  if (!config?.url) {
-    console.warn(
-      '[nocturne-memory] Missing "url" in plugin config — skipping tool registration.',
+  if (!config.url) {
+    api.logger?.warn?.(
+      'Missing "url" in plugin config — skipping tool registration.\n' +
+        "Set plugins.entries.nocturne-memory.config.url in your OpenClaw config.",
     );
     return;
   }
 
   if (!config.agents?.length) {
-    console.warn(
-      '[nocturne-memory] No agent namespace mappings configured — all agents will share the default namespace.',
+    api.logger?.info?.(
+      "No agent namespace mappings configured — all agents will share the default namespace.",
     );
   }
 
