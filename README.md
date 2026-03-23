@@ -110,6 +110,14 @@ openclaw plugins install @openclaw/nocturne-memory
 | `manage_triggers` | 管理记忆的触发关键词 |
 | `search_memory` | 全文搜索记忆（支持 domain 过滤） |
 
+## 记忆系统提示词
+
+本项目提供了一份开箱即用的 **Agent System Prompt**，指导 AI 自主管理长期记忆（何时读取、何时写入、何时整理）。
+
+👉 **[查看完整提示词](docs/MEMORY_SYSTEM_PROMPT.md)**
+
+将该提示词复制到你的 OpenClaw Agent 的 System Prompt 中即可使用。无需 mcporter，所有记忆工具已作为 OpenClaw 原生工具注册。
+
 ## 开发
 
 ```bash
