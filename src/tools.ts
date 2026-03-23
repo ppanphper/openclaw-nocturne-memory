@@ -31,6 +31,13 @@ async function proxy(
 type Api = any;
 
 export function registerTools(api: Api, config: NocturneMemoryConfig): void {
+  if (!config.url) {
+    throw new Error(
+      '[nocturne-memory] "url" is not configured. ' +
+        "Set it in your OpenClaw config, e.g.:\n" +
+        '  plugins.entries.nocturne-memory.config.url = "http://localhost:80"',
+    );
+  }
   api.registerTool({
     name: "read_memory",
     description: [
