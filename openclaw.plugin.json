@@ -5,6 +5,7 @@
   "description": "Multi-agent long-term memory powered by Nocturne Memory with namespace isolation. Each agent gets its own isolated memory space within a single NM instance.",
   "configSchema": {
     "type": "object",
+    "additionalProperties": false,
     "properties": {
       "url": {
         "type": "string",

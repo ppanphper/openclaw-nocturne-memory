@@ -243,6 +243,13 @@ export default {
     "Multi-agent long-term memory powered by Nocturne Memory with namespace isolation.",
 
   register(api: Api): void {
+    const log = api.logger ?? console;
+
+    // Debug: show what pluginConfig actually contains
+    log.info(
+      `[nocturne-memory] api.pluginConfig = ${JSON.stringify(api.pluginConfig)}`,
+    );
+
     const raw = api.pluginConfig as Record<string, unknown> | undefined;
     const config: NocturneMemoryConfig = {
       url: (raw?.url as string) ?? "",
@@ -251,7 +258,7 @@ export default {
     };
 
     if (!config.url) {
-      (api.logger ?? console).warn(
+      log.warn(
         '[nocturne-memory] Missing "url" in plugin config — skipping tool registration.\n' +
           "Set plugins.entries.nocturne-memory.config.url in your OpenClaw config.",
       );
