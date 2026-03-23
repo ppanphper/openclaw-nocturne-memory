@@ -171,19 +171,32 @@ const TOOLS = [
   },
 ] as const;
 
+// PluginToolContext shape exposed by OpenClaw — only agentId is needed here.
+type PluginToolContext = { agentId?: string };
+
 function registerAllTools(api: Api, config: NocturneMemoryConfig): void {
   const log = api.logger ?? console;
 
   for (const tool of TOOLS) {
     try {
-      api.registerTool({
-        name: tool.name,
-        description: tool.description,
-        parameters: tool.parameters,
-        async execute(agentId: string, params: Record<string, unknown>) {
-          return proxy(config, agentId, tool.mcpName, params);
-        },
-      });
+      // Use the ToolFactory pattern so that ctx.agentId is correctly captured
+      // at resolve-time rather than at call-time.
+      //
+      // Previously the tool was registered as a plain object and OpenClaw would
+      // call execute(toolCallId, params, ...) — the first argument being a call
+      // ID string like "call_abc123", not the agent ID.  That caused every agent
+      // to fall back to defaultNamespace and share the same memory namespace.
+      api.registerTool(
+        (ctx: PluginToolContext) => ({
+          name: tool.name,
+          description: tool.description,
+          parameters: tool.parameters,
+          async execute(_toolCallId: string, params: Record<string, unknown>) {
+            return proxy(config, ctx.agentId ?? "", tool.mcpName, params);
+          },
+        }),
+        { name: tool.name },
+      );
       log.info(`[nocturne-memory] registered tool: ${tool.name}`);
     } catch (err) {
       log.error(
