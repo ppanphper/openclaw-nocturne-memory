@@ -233,7 +233,8 @@ export default {
     registerAllTools(api, config);
 
     api.registerService?.({
-      name: "nocturne-memory",
+      id: "nocturne-memory",
+      start() {},
       async stop() {
         await closeAll();
       },
