@@ -12,36 +12,43 @@ import type { NocturneMemoryConfig } from "./src/config.js";
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Api = any;
 
-export default function register(api: Api): void {
-  const raw = api.pluginConfig as Record<string, unknown> | undefined;
-  const config: NocturneMemoryConfig = {
-    url: (raw?.url as string) ?? "",
-    agents: (raw?.agents as NocturneMemoryConfig["agents"]) ?? [],
-    defaultNamespace: (raw?.defaultNamespace as string) ?? "",
-  };
+export default {
+  id: "nocturne-memory",
+  name: "Nocturne Memory",
+  description:
+    "Multi-agent long-term memory powered by Nocturne Memory with namespace isolation.",
 
-  if (!config.url) {
-    api.logger?.warn?.(
-      'Missing "url" in plugin config — skipping tool registration.\n' +
-        "Set plugins.entries.nocturne-memory.config.url in your OpenClaw config.",
-    );
-    return;
-  }
+  register(api: Api): void {
+    const raw = api.pluginConfig as Record<string, unknown> | undefined;
+    const config: NocturneMemoryConfig = {
+      url: (raw?.url as string) ?? "",
+      agents: (raw?.agents as NocturneMemoryConfig["agents"]) ?? [],
+      defaultNamespace: (raw?.defaultNamespace as string) ?? "",
+    };
 
-  if (!config.agents?.length) {
-    api.logger?.info?.(
-      "No agent namespace mappings configured — all agents will share the default namespace.",
-    );
-  }
+    if (!config.url) {
+      api.logger?.warn?.(
+        'Missing "url" in plugin config — skipping tool registration.\n' +
+          "Set plugins.entries.nocturne-memory.config.url in your OpenClaw config.",
+      );
+      return;
+    }
 
-  setBaseUrl(config.url);
+    if (!config.agents?.length) {
+      api.logger?.info?.(
+        "No agent namespace mappings configured — all agents will share the default namespace.",
+      );
+    }
 
-  registerTools(api, config);
+    setBaseUrl(config.url);
 
-  api.registerService?.({
-    name: "nocturne-memory",
-    async stop() {
-      await closeAll();
-    },
-  });
-}
+    registerTools(api, config);
+
+    api.registerService?.({
+      name: "nocturne-memory",
+      async stop() {
+        await closeAll();
+      },
+    });
+  },
+};
