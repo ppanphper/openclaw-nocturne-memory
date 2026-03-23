@@ -5,7 +5,6 @@
  * Each agent operates in its own namespace, unaware of others' memories.
  */
 
-import { Type } from "@sinclair/typebox";
 import { resolveNamespace, getMcpEndpoint } from "./src/config.js";
 import type { NocturneMemoryConfig } from "./src/config.js";
 import { setBaseUrl, callNMTool, closeAll } from "./src/nm-client.js";
@@ -31,209 +30,168 @@ async function proxy(
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Api = any;
 
-function registerAllTools(api: Api, config: NocturneMemoryConfig): void {
-  api.registerTool({
+const TOOLS = [
+  {
     name: "read_memory",
-    description: [
-      "Reads a memory by its URI.",
-      "",
-      "Special System URIs:",
-      "- system://boot   : Loads your core memories (startup only).",
-      "- system://index  : Full index of all available memories.",
-      "- system://index/<domain> : Index of memories under a domain.",
-      "- system://recent : Recently modified memories (default 10).",
-      "- system://recent/N : The N most recently modified memories.",
-      "- system://glossary : All glossary keywords and their bound nodes.",
-    ].join("\n"),
-    parameters: Type.Object({
-      uri: Type.String({ description: 'Memory URI (e.g. "core://agent")' }),
-    }),
-    async execute(agentId: string, params: { uri: string }) {
-      return proxy(config, agentId, "read_memory", params);
+    description:
+      "Reads a memory by its URI.\n\nSpecial System URIs:\n- system://boot   : Loads your core memories (startup only).\n- system://index  : Full index of all available memories.\n- system://index/<domain> : Index of memories under a domain.\n- system://recent : Recently modified memories (default 10).\n- system://recent/N : The N most recently modified memories.\n- system://glossary : All glossary keywords and their bound nodes.",
+    parameters: {
+      type: "object" as const,
+      required: ["uri"],
+      properties: {
+        uri: { type: "string", description: 'Memory URI (e.g. "core://agent")' },
+      },
     },
-  });
-
-  api.registerTool({
+    mcpName: "read_memory",
+  },
+  {
     name: "create_memory",
-    description: [
-      "Creates a new memory under a parent URI.",
-      "parent_uri MUST point to an existing node.",
-    ].join("\n"),
-    parameters: Type.Object({
-      parent_uri: Type.String({
-        description:
-          'Parent URI (e.g. "core://agent"). Use "core://" for root.',
-      }),
-      content: Type.String({ description: "Memory content" }),
-      priority: Type.Integer({
-        description: "Retrieval priority (lower = higher priority, min 0)",
-        minimum: 0,
-      }),
-      title: Type.Optional(
-        Type.String({
-          description:
-            "Child title (becomes URI segment). Auto-generated if omitted.",
-        }),
-      ),
-      disclosure: Type.Optional(
-        Type.String({
-          description:
-            'When to disclose this memory (e.g. "When asked about pets")',
-          default: "",
-        }),
-      ),
-    }),
-    async execute(
-      agentId: string,
-      params: {
-        parent_uri: string;
-        content: string;
-        priority: number;
-        title?: string;
-        disclosure?: string;
+    description:
+      "Creates a new memory under a parent URI. parent_uri MUST point to an existing node.",
+    parameters: {
+      type: "object" as const,
+      required: ["parent_uri", "content", "priority"],
+      properties: {
+        parent_uri: {
+          type: "string",
+          description: 'Parent URI (e.g. "core://agent"). Use "core://" for root.',
+        },
+        content: { type: "string", description: "Memory content" },
+        priority: {
+          type: "integer",
+          description: "Retrieval priority (lower = higher priority, min 0)",
+          minimum: 0,
+        },
+        title: {
+          type: "string",
+          description: "Child title (becomes URI segment). Auto-generated if omitted.",
+        },
+        disclosure: {
+          type: "string",
+          description: 'When to disclose this memory (e.g. "When asked about pets")',
+        },
       },
-    ) {
-      return proxy(config, agentId, "create_memory", params);
     },
-  });
-
-  api.registerTool({
+    mcpName: "create_memory",
+  },
+  {
     name: "update_memory",
-    description: [
-      "Updates an existing memory. Read it first to know what you are overwriting.",
-      "Two content-editing modes (mutually exclusive):",
-      "- old_string / new_string : Replace a substring.",
-      "- append : Append text to the end.",
-    ].join("\n"),
-    parameters: Type.Object({
-      uri: Type.String({ description: "Memory URI to update" }),
-      old_string: Type.Optional(
-        Type.String({ description: "Substring to replace" }),
-      ),
-      new_string: Type.Optional(
-        Type.String({ description: "Replacement text" }),
-      ),
-      append: Type.Optional(Type.String({ description: "Text to append" })),
-      priority: Type.Optional(
-        Type.Integer({ description: "New priority", minimum: 0 }),
-      ),
-      disclosure: Type.Optional(
-        Type.String({ description: "New disclosure condition" }),
-      ),
-    }),
-    async execute(
-      agentId: string,
-      params: {
-        uri: string;
-        old_string?: string;
-        new_string?: string;
-        append?: string;
-        priority?: number;
-        disclosure?: string;
+    description:
+      "Updates an existing memory. Read it first to know what you are overwriting.\nTwo content-editing modes (mutually exclusive):\n- old_string / new_string : Replace a substring.\n- append : Append text to the end.",
+    parameters: {
+      type: "object" as const,
+      required: ["uri"],
+      properties: {
+        uri: { type: "string", description: "Memory URI to update" },
+        old_string: { type: "string", description: "Substring to replace" },
+        new_string: { type: "string", description: "Replacement text" },
+        append: { type: "string", description: "Text to append" },
+        priority: { type: "integer", description: "New priority", minimum: 0 },
+        disclosure: { type: "string", description: "New disclosure condition" },
       },
-    ) {
-      return proxy(config, agentId, "update_memory", params);
     },
-  });
-
-  api.registerTool({
+    mcpName: "update_memory",
+  },
+  {
     name: "delete_memory",
     description:
       "Deletes a memory by cutting its URI path. Read it first to confirm what you are removing.",
-    parameters: Type.Object({
-      uri: Type.String({
-        description: 'URI to delete (e.g. "core://agent/old_note")',
-      }),
-    }),
-    async execute(agentId: string, params: { uri: string }) {
-      return proxy(config, agentId, "delete_memory", params);
+    parameters: {
+      type: "object" as const,
+      required: ["uri"],
+      properties: {
+        uri: {
+          type: "string",
+          description: 'URI to delete (e.g. "core://agent/old_note")',
+        },
+      },
     },
-  });
-
-  api.registerTool({
+    mcpName: "delete_memory",
+  },
+  {
     name: "add_alias",
-    description: [
-      "Creates an alias URI pointing to the same memory as target_uri.",
-      "Aliases can cross domains. Subtree paths are cascaded automatically.",
-    ].join("\n"),
-    parameters: Type.Object({
-      new_uri: Type.String({ description: "New alias URI" }),
-      target_uri: Type.String({ description: "Existing URI to alias" }),
-      priority: Type.Optional(
-        Type.Integer({
+    description:
+      "Creates an alias URI pointing to the same memory as target_uri. Aliases can cross domains. Subtree paths are cascaded automatically.",
+    parameters: {
+      type: "object" as const,
+      required: ["new_uri", "target_uri"],
+      properties: {
+        new_uri: { type: "string", description: "New alias URI" },
+        target_uri: { type: "string", description: "Existing URI to alias" },
+        priority: {
+          type: "integer",
           description: "Retrieval priority for this alias context",
           minimum: 0,
-          default: 0,
-        }),
-      ),
-      disclosure: Type.Optional(
-        Type.String({ description: "Disclosure condition for this alias" }),
-      ),
-    }),
-    async execute(
-      agentId: string,
-      params: {
-        new_uri: string;
-        target_uri: string;
-        priority?: number;
-        disclosure?: string;
+        },
+        disclosure: { type: "string", description: "Disclosure condition for this alias" },
       },
-    ) {
-      return proxy(config, agentId, "add_alias", params);
     },
-  });
-
-  api.registerTool({
+    mcpName: "add_alias",
+  },
+  {
     name: "manage_triggers",
-    description: [
-      "Binds / unbinds trigger words to a memory.",
-      "A memory without triggers will never surface automatically.",
-    ].join("\n"),
-    parameters: Type.Object({
-      uri: Type.String({ description: "Target memory URI" }),
-      add: Type.Optional(
-        Type.Array(Type.String(), { description: "Trigger words to add" }),
-      ),
-      remove: Type.Optional(
-        Type.Array(Type.String(), { description: "Trigger words to remove" }),
-      ),
-    }),
-    async execute(
-      agentId: string,
-      params: { uri: string; add?: string[]; remove?: string[] },
-    ) {
-      return proxy(config, agentId, "manage_triggers", params);
+    description:
+      "Binds / unbinds trigger words to a memory. A memory without triggers will never surface automatically.",
+    parameters: {
+      type: "object" as const,
+      required: ["uri"],
+      properties: {
+        uri: { type: "string", description: "Target memory URI" },
+        add: { type: "array", items: { type: "string" }, description: "Trigger words to add" },
+        remove: {
+          type: "array",
+          items: { type: "string" },
+          description: "Trigger words to remove",
+        },
+      },
     },
-  });
-
-  api.registerTool({
+    mcpName: "manage_triggers",
+  },
+  {
     name: "search_memory",
-    description: [
-      "Full-text search over memories by path and content.",
-      "Lexical search, not semantic. Use specific keywords.",
-    ].join("\n"),
-    parameters: Type.Object({
-      query: Type.String({ description: "Search keywords" }),
-      domain: Type.Optional(
-        Type.String({
+    description:
+      "Full-text search over memories by path and content. Lexical search, not semantic. Use specific keywords.",
+    parameters: {
+      type: "object" as const,
+      required: ["query"],
+      properties: {
+        query: { type: "string", description: "Search keywords" },
+        domain: {
+          type: "string",
           description: 'Optional domain filter (e.g. "core", "writer")',
-        }),
-      ),
-      limit: Type.Optional(
-        Type.Integer({
+        },
+        limit: {
+          type: "integer",
           description: "Max results (default 10)",
           minimum: 1,
-          default: 10,
-        }),
-      ),
-    }),
-    async execute(
-      agentId: string,
-      params: { query: string; domain?: string; limit?: number },
-    ) {
-      return proxy(config, agentId, "search_memory", params);
+        },
+      },
     },
-  });
+    mcpName: "search_memory",
+  },
+] as const;
+
+function registerAllTools(api: Api, config: NocturneMemoryConfig): void {
+  const log = api.logger ?? console;
+
+  for (const tool of TOOLS) {
+    try {
+      api.registerTool({
+        name: tool.name,
+        description: tool.description,
+        parameters: tool.parameters,
+        async execute(agentId: string, params: Record<string, unknown>) {
+          return proxy(config, agentId, tool.mcpName, params);
+        },
+      });
+      log.info(`[nocturne-memory] registered tool: ${tool.name}`);
+    } catch (err) {
+      log.error(
+        `[nocturne-memory] FAILED to register tool "${tool.name}": ${err}`,
+      );
+      throw err;
+    }
+  }
 }
 
 export default {
