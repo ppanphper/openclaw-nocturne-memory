@@ -3,8 +3,7 @@
   "version": "0.1.0",
   "description": "Multi-agent Nocturne Memory plugin for OpenClaw — namespace-based memory isolation",
   "type": "module",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "index.ts",
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch"
@@ -13,17 +12,23 @@
     "@modelcontextprotocol/sdk": "^1.12.1",
     "@sinclair/typebox": "^0.34.0"
   },
+  "peerDependencies": {
+    "openclaw": "*"
+  },
+  "peerDependenciesMeta": {
+    "openclaw": { "optional": true }
+  },
   "devDependencies": {
     "typescript": "^5.7.0",
     "@types/node": "^22.0.0"
   },
   "openclaw": {
-    "extensions": ["./dist/index.js"],
+    "extensions": ["./index.ts"],
     "install": {
       "npmSpec": "@openclaw/nocturne-memory",
       "localPath": "extensions/nocturne-memory"
     }
   },
-  "files": ["dist", "README.md", "openclaw.plugin.json"],
+  "files": ["index.ts", "src", "README.md", "openclaw.plugin.json"],
   "license": "MIT"
 }
