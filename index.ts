@@ -187,14 +187,22 @@ function registerAllTools(api: Api, config: NocturneMemoryConfig): void {
       // ID string like "call_abc123", not the agent ID.  That caused every agent
       // to fall back to defaultNamespace and share the same memory namespace.
       api.registerTool(
-        (ctx: PluginToolContext) => ({
-          name: tool.name,
-          description: tool.description,
-          parameters: tool.parameters,
-          async execute(_toolCallId: string, params: Record<string, unknown>) {
-            return proxy(config, ctx.agentId ?? "", tool.mcpName, params);
-          },
-        }),
+        (ctx: PluginToolContext) => {
+          // 诊断日志：factory 被调用时捕获的 ctx
+          log.info(`[nocturne-memory][diag] factory invoked for tool=${tool.name}, ctx.agentId=${JSON.stringify(ctx.agentId)}, ctx keys=${JSON.stringify(Object.keys(ctx))}`);
+          const capturedAgentId = ctx.agentId ?? "";
+          const resolvedNs = resolveNamespace(config, capturedAgentId);
+          log.info(`[nocturne-memory][diag] resolved namespace: agentId=${JSON.stringify(capturedAgentId)} -> ns=${JSON.stringify(resolvedNs)}`);
+          return {
+            name: tool.name,
+            description: tool.description,
+            parameters: tool.parameters,
+            async execute(_toolCallId: string, params: Record<string, unknown>) {
+              log.info(`[nocturne-memory][diag] execute: tool=${tool.mcpName}, agentId=${JSON.stringify(capturedAgentId)}, ns=${JSON.stringify(resolvedNs)}, params=${JSON.stringify(params)}`);
+              return proxy(config, capturedAgentId, tool.mcpName, params);
+            },
+          };
+        },
         { name: tool.name },
       );
       log.info(`[nocturne-memory] registered tool: ${tool.name}`);
