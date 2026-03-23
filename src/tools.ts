@@ -8,7 +8,6 @@
 import { Type } from "@sinclair/typebox";
 import { callNMTool } from "./nm-client.js";
 import { resolveNamespace, type NocturneMemoryConfig } from "./config.js";
-import type { OpenClawPluginApi } from "openclaw/plugin-sdk/plugin-entry";
 
 type ToolContent = { type: "text"; text: string };
 type ToolResult = { content: ToolContent[] };
@@ -28,10 +27,10 @@ async function proxy(
   return textResult(text);
 }
 
-export function registerTools(
-  api: OpenClawPluginApi,
-  config: NocturneMemoryConfig,
-): void {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type Api = any;
+
+export function registerTools(api: Api, config: NocturneMemoryConfig): void {
   api.registerTool({
     name: "read_memory",
     description: [
