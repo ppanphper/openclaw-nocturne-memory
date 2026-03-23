@@ -280,13 +280,13 @@ session_tokens > (context_window - reserveTokensFloor - softThresholdTokens)
 **配置位置：** `~/.openclaw/openclaw.json`
 ```json5
 {
-  agents: {
-    defaults: {
-      compaction: {
-        reserveTokensFloor: 20000,
-        memoryFlush: {
-          enabled: true,  // 必须启用
-          softThresholdTokens: 4000,
+  "agents": {
+    "defaults": {
+      "compaction": {
+        "reserveTokensFloor": 20000,
+        "memoryFlush": {
+          "enabled": true,  // 必须启用
+          "softThresholdTokens": 4000,
         },
       },
     },
