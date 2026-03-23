@@ -189,7 +189,7 @@ function registerAllTools(api: Api, config: NocturneMemoryConfig): void {
       api.registerTool(
         (ctx: PluginToolContext) => {
           // 诊断日志：factory 被调用时捕获的 ctx
-          log.info(`[nocturne-memory][diag] factory invoked for tool=${tool.name}, ctx.agentId=${JSON.stringify(ctx.agentId)}, ctx keys=${JSON.stringify(Object.keys(ctx))}`);
+          log.info(`[nocturne-memory][diag] factory invoked for tool=${tool.name}, ctx.agentId=${JSON.stringify(ctx.agentId)}, ctx.sessionKey=${JSON.stringify((ctx as any).sessionKey)}, ctx keys=${JSON.stringify(Object.keys(ctx))}`);
           const capturedAgentId = ctx.agentId ?? "";
           const resolvedNs = resolveNamespace(config, capturedAgentId);
           log.info(`[nocturne-memory][diag] resolved namespace: agentId=${JSON.stringify(capturedAgentId)} -> ns=${JSON.stringify(resolvedNs)}`);
