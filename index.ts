@@ -1,9 +1,9 @@
 /**
- * OpenClaw Nocturne Memory Plugin
- *
- * Provides multi-agent long-term memory with namespace isolation.
- * Each agent operates in its own namespace, unaware of others' memories.
- */
+* OpenClaw Nocturne Memory Plugin
+*
+* Provides multi-agent long-term memory with namespace isolation.
+* Each agent operates in its own namespace, unaware of others' memories.
+*/
 
 import { resolveNamespace, getMcpEndpoint } from "./src/config.js";
 import type { NocturneMemoryConfig } from "./src/config.js";
@@ -47,7 +47,7 @@ const TOOLS = [
   {
     name: "create_memory",
     description:
-      "Creates a new memory under a parent URI. parent_uri MUST point to an existing node.",
+      "Creates a new memory under a parent URI. parent_uri MUST point to an existing node.\nIf title is provided, it becomes the last URI segment (e.g. parent_uri=\"core://agent\", title=\"skills\" → \"core://agent/skills\"). If omitted, a title is auto-generated from content.",
     parameters: {
       type: "object" as const,
       required: ["parent_uri", "content", "priority"],
@@ -77,7 +77,7 @@ const TOOLS = [
   {
     name: "update_memory",
     description:
-      "Updates an existing memory. Read it first to know what you are overwriting.\nTwo content-editing modes (mutually exclusive):\n- old_string / new_string : Replace a substring.\n- append : Append text to the end.",
+      "Updates an existing memory. You MUST read_memory first before updating — never modify a memory you haven't read in this session.\nTwo content-editing modes (mutually exclusive):\n- old_string / new_string : Replace a substring.\n- append : Append text to the end.",
     parameters: {
       type: "object" as const,
       required: ["uri"],
@@ -111,7 +111,7 @@ const TOOLS = [
   {
     name: "add_alias",
     description:
-      "Creates an alias URI pointing to the same memory as target_uri. Aliases can cross domains. Subtree paths are cascaded automatically.",
+      "Creates an alias URI pointing to the same underlying memory (same Memory ID, not a copy). The alias has its own independent priority and disclosure. Use this to make one memory accessible from multiple paths with different retrieval contexts. Aliases can cross domains. Subtree paths are cascaded automatically.",
     parameters: {
       type: "object" as const,
       required: ["new_uri", "target_uri"],
@@ -131,7 +131,7 @@ const TOOLS = [
   {
     name: "manage_triggers",
     description:
-      "Binds / unbinds trigger words to a memory. A memory without triggers will never surface automatically.",
+      "Binds / unbinds trigger words to a memory, creating lateral recall channels beyond the parent-child hierarchy. Use distinctive nouns, jargon, or core concepts as triggers. A memory without triggers will never surface automatically.",
     parameters: {
       type: "object" as const,
       required: ["uri"],
@@ -231,7 +231,7 @@ export default {
     if (!config.url) {
       log.warn(
         '[nocturne-memory] Missing "url" in plugin config — skipping tool registration.\n' +
-          "Set plugins.entries.nocturne-memory.config.url in your OpenClaw config.",
+        "Set plugins.entries.nocturne-memory.config.url in your OpenClaw config.",
       );
       return;
     }
@@ -247,7 +247,7 @@ export default {
 
     api.registerService?.({
       id: "nocturne-memory",
-      start() {},
+      start() { },
       async stop() {
         await closeAll();
       },

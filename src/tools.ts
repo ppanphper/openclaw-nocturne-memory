@@ -55,8 +55,8 @@ export function registerTools(api: Api, config: NocturneMemoryConfig): void {
   api.registerTool({
     name: "create_memory",
     description: [
-      "Creates a new memory under a parent URI.",
-      "parent_uri MUST point to an existing node.",
+      "Creates a new memory under a parent URI. parent_uri MUST point to an existing node.",
+      'If title is provided, it becomes the last URI segment (e.g. parent_uri="core://agent", title="skills" → "core://agent/skills"). If omitted, a title is auto-generated from content.',
     ].join("\n"),
     parameters: Type.Object({
       parent_uri: Type.String({
@@ -99,7 +99,7 @@ export function registerTools(api: Api, config: NocturneMemoryConfig): void {
   api.registerTool({
     name: "update_memory",
     description: [
-      "Updates an existing memory. Read it first to know what you are overwriting.",
+      "Updates an existing memory. You MUST read_memory first before updating — never modify a memory you haven't read in this session.",
       "Two content-editing modes (mutually exclusive):",
       "- old_string / new_string : Replace a substring.",
       "- append : Append text to the end.",
@@ -155,7 +155,9 @@ export function registerTools(api: Api, config: NocturneMemoryConfig): void {
   api.registerTool({
     name: "add_alias",
     description: [
-      "Creates an alias URI pointing to the same memory as target_uri.",
+      "Creates an alias URI pointing to the same underlying memory (same Memory ID, not a copy).",
+      "The alias has its own independent priority and disclosure.",
+      "Use this to make one memory accessible from multiple paths with different retrieval contexts.",
       "Aliases can cross domains. Subtree paths are cascaded automatically.",
     ].join("\n"),
     parameters: Type.Object({
@@ -188,7 +190,8 @@ export function registerTools(api: Api, config: NocturneMemoryConfig): void {
   api.registerTool({
     name: "manage_triggers",
     description: [
-      "Binds / unbinds trigger words to a memory.",
+      "Binds / unbinds trigger words to a memory, creating lateral recall channels beyond the parent-child hierarchy.",
+      "Use distinctive nouns, jargon, or core concepts as triggers.",
       "A memory without triggers will never surface automatically.",
     ].join("\n"),
     parameters: Type.Object({
